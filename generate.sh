@@ -10,7 +10,20 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
+
+echo -e "${PURPLE}"
+cat <<'EOB'
+
+  _   _   _   _   _   _   _   _   _   _
+ / \ / \ / \ / \ / \ / \ / \ / \ / \ / \
+( P | r | o | m | p | t | L | o | o | m )
+ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/ \_/
+
+
+EOB
+echo -e "${NC}"
 
 # Get project configuration
 read -p "Project Name (default: My Project): " PROJECT_NAME
