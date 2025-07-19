@@ -35,6 +35,58 @@ echo -e "${YELLOW}Creating directory structure...${NC}"
 mkdir -p .github/{prompts,config}
 mkdir -p docs/{adr,framework}
 
+# Create stubs for referenced files
+echo -e "${YELLOW}Creating stubs for referenced files...${NC}"
+touch README.md
+cat > docs/requirements.md << EOF
+# Requirements Document
+
+## Stakeholder Analysis
+
+## Functional Requirements
+
+## Non-functional Requirements
+
+## Constraints and Dependencies
+EOF
+
+cat > docs/user-stories.md << EOF
+# User Stories
+
+## Epic Overview
+
+## Detailed User Stories
+
+## Story Map
+
+## Prioritization
+EOF
+
+mkdir -p docs/architecture
+cat > docs/architecture/overview.md << EOF
+# Architecture Overview
+
+## System Overview
+EOF
+
+cat > docs/architecture/components.md << EOF
+# Architecture Components
+
+## Component Details
+EOF
+
+cat > docs/architecture/integrations.md << EOF
+# Architecture Integrations
+
+## Integration Points
+EOF
+
+cat > docs/architecture/deployment.md << EOF
+# Deployment Architecture
+
+## Deployment Details
+EOF
+
 # Generate .github/copilot-instructions.md
 echo -e "${YELLOW}Creating copilot-instructions.md...${NC}"
 cat > .github/copilot-instructions.md << EOF
@@ -496,7 +548,19 @@ Create comprehensive architecture documentation including:
 - docs/architecture/deployment.md
 
 ## Memory Update
+After completion, update #docs/memory.md with:
+- Key accomplishments from this phase
+- Important decisions made
+- Next steps identified
+
 Tag: #Documentation #Architecture
+
+## Self-Critique
+Review your output for:
+- ✅ Complete documentation coverage
+- ✅ Consistency with architecture decisions
+- ✅ Clear, organized structure
+- ✅ Proper tagging and memory update
 PROMPT4
 
 # 05-implementation.prompt.md
@@ -531,7 +595,19 @@ Reference codebase: #codebase
 - Implement proper validation
 
 ## Memory Update
+After completion, update #docs/memory.md with:
+- Key accomplishments from this phase
+- Important decisions made
+- Next steps identified
+
 Tag: #Implementation #Development
+
+## Self-Critique
+Review your output for:
+- ✅ Code matches architecture and requirements
+- ✅ Error handling and validation present
+- ✅ Documentation included
+- ✅ Proper tagging and memory update
 PROMPT5
 
 # Create remaining prompts 06-16 with basic structure
