@@ -64,15 +64,41 @@ cat > docs/requirements.md << EOF
 EOF
 
 cat > docs/user-stories.md << EOF
-# User Stories
+## Epics
+# List of high-level epics for the project
 
-## Epic Overview
+### Example Epics
+- As a Sales Rep, I want to manage my leads and opportunities so that I can close deals efficiently.
+- As an Account Manager, I want to track customer interactions so that I can improve retention.
 
-## Detailed User Stories
+## User Stories
+# Detailed user stories for each epic
+
+### Example User Stories
+- **As a Sales Rep, I want to add new leads, so that I can track potential clients.**
+  - [ ] Can add lead with name, company, contact info
+  - [ ] Validation for required fields
+  - [ ] Accessible form fields
+
+- **As a Sales Rep, I want to update opportunity status, so that I can reflect deal progress.**
+  - [ ] Status options: New, In Progress, Won, Lost
+  - [ ] Activity log for changes
+
+- **As an Account Manager, I want to view customer history, so that I can personalize outreach.**
+  - [ ] Timeline of interactions
+  - [ ] Exportable data
 
 ## Story Map
+# Mapping of user journeys and dependencies
+
+Lead Management → Opportunity Tracking → Customer History
 
 ## Prioritization
+# Prioritization of user stories and epics
+
+1. Lead Management (Critical)
+2. Opportunity Tracking (High)
+3. Customer History (Medium)
 EOF
 
 mkdir -p docs/architecture
@@ -762,13 +788,13 @@ DIAGRAMS
 # Generate docs/memory.md
 echo -e "${YELLOW}Creating memory.md...${NC}"
 cat > docs/memory.md << EOF
-# ${PROJECT_NAME} Memory
+## ${PROJECT_NAME} Memory
 
-\`\`\`mermaid
+```mermaid
 timeline
     title Project Timeline
     $(date +%Y-%m-%d) : Project Initialized
-\`\`\`
+```
 
 ## Current Status
 Project initialized with Copilot-centric prompt framework.
@@ -785,6 +811,24 @@ Project initialized with Copilot-centric prompt framework.
 - ✅ Configuration files ready
 - ✅ Memory system initialized
 
+### Phase Outputs
+# This section summarizes outputs from each phase for traceability.
+
+#### Requirements Phase
+- Stakeholder analysis, functional and non-functional requirements, constraints stored in docs/requirements.md
+
+#### User Stories Phase
+- Epics and detailed user stories stored in docs/user-stories.md
+- Story map and prioritization documented
+
+#### Architecture Phase
+- Architecture decisions and diagrams stored in docs/adr/ and docs/architecture/
+
+#### Implementation Phase
+- Core components, API endpoints, and models implemented
+
+... (add summaries for other phases as completed)
+
 ### Next Steps
 1. Begin Phase 1: Requirements Gathering
 2. Customize team configuration if needed
@@ -792,7 +836,7 @@ Project initialized with Copilot-centric prompt framework.
 4. Initialize project documentation
 
 ### Tags
-#ProjectInit #FrameworkSetup #$(echo "${PROJECT_NAME}" | tr ' ' '')
+#ProjectInit #FrameworkSetup #$(echo "${PROJECT_NAME}" | tr -d ' ')
 
 ---
 
@@ -809,7 +853,7 @@ cat > docs/framework/usage-guide.md << EOF
 
 ### 1. Starting a New Phase
 1. Start a new GitHub Copilot Chat
-2. Type `/<prompt phase name>` to load the prompt phase
+2. Type `/01-requirements` (or another phase name) to load the prompt phase
 
 ### 2. Memory Management
 - **Before each phase**: Read current memory context from \`docs/memory.md\`
@@ -944,8 +988,6 @@ echo -e "${BLUE}⚡ Stack: ${TECH_STACK}${NC}"
 echo ""
 echo -e "${YELLOW}📋 Next Steps:${NC}"
 echo "1. Review and customize .github/config/ files"
-echo "2. Start with Phase 1: Copy content from .github/prompts/01-requirements.prompt.md"
-echo "3. Paste into GitHub Copilot Chat and begin requirements gathering"
-echo "4. Update docs/memory.md after each phase"
+echo "2. Start with Phase 1: In GitHub Copilot Chat, type '/01-requirements' to load the requirements prompt"
 echo ""
 echo -e "${GREEN}🚀 Happy coding with your new Copilot framework!${NC}"
