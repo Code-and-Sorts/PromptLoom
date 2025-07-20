@@ -698,7 +698,7 @@ After completion, update #docs/memory.md with:
 - Important decisions made
 - Next steps identified
 
-Tag: #${name^} #$(echo "${PROJECT_NAME}" | tr ' ' '')
+Tag: #${name^} #$(echo "${PROJECT_NAME}" | tr -d ' ')
 EOF
 done
 
@@ -785,9 +785,8 @@ graph TD
 ```
 DIAGRAMS
 
-# Generate docs/memory.md
 echo -e "${YELLOW}Creating memory.md...${NC}"
-cat > docs/memory.md << EOF
+cat > docs/memory.md << 'EOF'
 ## ${PROJECT_NAME} Memory
 
 ```mermaid
@@ -853,7 +852,7 @@ cat > docs/framework/usage-guide.md << EOF
 
 ### 1. Starting a New Phase
 1. Start a new GitHub Copilot Chat
-2. Type `/01-requirements` (or another phase name) to load the prompt phase
+2. Type \`/01-requirements\` (or another phase name) to load the prompt phase (example, use backticks in markdown)
 
 ### 2. Memory Management
 - **Before each phase**: Read current memory context from \`docs/memory.md\`
