@@ -1,0 +1,69 @@
+name: Test generate.sh
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch: {}
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run generator
+        run: |
+          bash ./generate.sh -y --force \
+            --project "CI Project" \
+            --team "CI Team" \
+            --stack "CI Stack" \
+            --specializations "Frontend,Backend,Testing" \
+            --tags "Performance,UX,Security"
+
+      - name: Assert outputs
+        run: |
+          set -euo pipefail
+          files=(
+            ".github/copilot-instructions.md"
+            ".github/config/team-config.yml"
+            ".github/config/phase-config.yml"
+            ".github/config/tags.yml"
+            ".github/prompts/01-requirements.prompt.md"
+            "docs/requirements.md"
+            "docs/user-stories.md"
+            "docs/architecture/overview.md"
+            "docs/framework/workflow-diagrams.md"
+            "docs/memory.md"
+            "docs/framework/usage-guide.md"
+          )
+          for f in "${files[@]}"; do
+            test -f "$f" || { echo "Missing $f"; exit 1; }
+            test -s "$f" || { echo "Empty $f"; exit 1; }
+          done
+
+          # Validate content substitutions
+          grep -q "CI Project - Development Instructions" .github/copilot-instructions.md
+          grep -q "Team: CI Team" .github/copilot-instructions.md
+          grep -q "This is CI Project built with CI Stack." .github/copilot-instructions.md
+
+          grep -q "specializations:" .github/config/team-config.yml
+          grep -q "- \"Frontend\"" .github/config/team-config.yml
+          grep -q "- \"Backend\"" .github/config/team-config.yml
+
+          grep -q "custom:" .github/config/tags.yml
+          grep -q "Performance" .github/config/tags.yml
+          grep -q "UX" .github/config/tags.yml
+
+          grep -q "^## CI Project Memory" docs/memory.md
+          grep -q "Project initialized with Copilot-centric prompt framework." docs/memory.md
+
+          # Ensure a reasonable number of prompts were generated
+          test -d ".github/prompts"
+          count=$(ls -1 .github/prompts/*.prompt.md | wc -l)
+          if [ "$count" -lt 5 ]; then
+            echo "Expected at least 5 prompt templates, found $count"
+            exit 1
+          fi
