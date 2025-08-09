@@ -893,11 +893,11 @@ echo -e "${YELLOW}Creating memory.md...${NC}"
 write_file docs/memory.md << EOF
 ## ${PROJECT_NAME} Memory
 
-```mermaid
+~~~mermaid
 timeline
     title Project Timeline
     $(date +%Y-%m-%d) : Project Initialized
-```
+~~~
 
 ## Current Status
 Project initialized with Copilot-centric prompt framework.
