@@ -9,12 +9,16 @@ on:
 
 jobs:
   generate:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Run generator
+        shell: bash
         run: |
           bash ./generate.sh -y --force \
             --project "CI Project" \
@@ -24,6 +28,7 @@ jobs:
             --tags "Performance,UX,Security"
 
       - name: Assert outputs
+        shell: bash
         run: |
           set -euo pipefail
           files=(
