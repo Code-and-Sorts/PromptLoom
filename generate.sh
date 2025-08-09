@@ -3,7 +3,69 @@
 # PromptLoom Framework Setup Script
 # Creates the complete directory structure and template files
 
-set -e
+set -euo pipefail
+IFS=$'\n\t'
+
+# Default values
+YES_FLAG=false
+FORCE_FLAG=false
+PROJECT_NAME=""
+TEAM_NAME=""
+TECH_STACK=""
+SPECIALIZATIONS=""
+CUSTOM_TAGS=""
+
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -y|--yes)
+            YES_FLAG=true
+            shift
+            ;;
+        --force)
+            FORCE_FLAG=true
+            shift
+            ;;
+        --project)
+            PROJECT_NAME="$2"
+            shift 2
+            ;;
+        --team)
+            TEAM_NAME="$2"
+            shift 2
+            ;;
+        --stack)
+            TECH_STACK="$2"
+            shift 2
+            ;;
+        --specializations)
+            SPECIALIZATIONS="$2"
+            shift 2
+            ;;
+        --tags)
+            CUSTOM_TAGS="$2"
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  -y, --yes              Skip all prompts and use defaults"
+            echo "  --force                Overwrite existing files without asking"
+            echo "  --project NAME         Set project name"
+            echo "  --team NAME            Set team name"
+            echo "  --stack STACK          Set tech stack"
+            echo "  --specializations LIST Set specializations (comma-separated)"
+            echo "  --tags LIST            Set custom tags (comma-separated)"
+            echo "  -h, --help             Show this help message"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 # Colors for output
 RED='\033[0;31m'
@@ -12,6 +74,39 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
+
+# Helper functions
+confirm_write() {
+  local path="$1"
+  if [[ -f "$path" ]] && [[ "$FORCE_FLAG" != true ]]; then
+    if [[ "$YES_FLAG" == true ]]; then
+      echo -e "${YELLOW}Overwriting existing file: $path${NC}"
+      return 0
+    fi
+    echo -e "${YELLOW}File exists: $path${NC}"
+    read -p "Overwrite? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      return 1
+    fi
+  fi
+  return 0
+}
+
+write_file() {
+  local path="$1"
+  local dir=$(dirname "$path")
+
+  if ! confirm_write "$path"; then
+    echo -e "${RED}Skipping: $path${NC}"
+    return 1
+  fi
+
+  mkdir -p "$dir"
+  cat > "$path"
+  echo -e "${GREEN}Created: $path${NC}"
+  return 0
+}
 
 echo -e "${PURPLE}"
 cat <<'EOB'
@@ -26,19 +121,29 @@ EOB
 echo -e "${NC}"
 
 # Get project configuration
-read -p "Project Name (default: My Project): " PROJECT_NAME
+if [[ "$YES_FLAG" != true && -z "$PROJECT_NAME" ]]; then
+  read -p "Project Name (default: My Project): " PROJECT_NAME
+fi
 PROJECT_NAME=${PROJECT_NAME:-"My Project"}
 
-read -p "Team Name (default: Development Team): " TEAM_NAME
+if [[ "$YES_FLAG" != true && -z "$TEAM_NAME" ]]; then
+  read -p "Team Name (default: Development Team): " TEAM_NAME
+fi
 TEAM_NAME=${TEAM_NAME:-"Development Team"}
 
-read -p "Tech Stack (default: TypeScript/React/Node.js): " TECH_STACK
+if [[ "$YES_FLAG" != true && -z "$TECH_STACK" ]]; then
+  read -p "Tech Stack (default: TypeScript/React/Node.js): " TECH_STACK
+fi
 TECH_STACK=${TECH_STACK:-"TypeScript/React/Node.js"}
 
-read -p "Team Specializations (comma-separated, default: Frontend,Backend,Testing): " SPECIALIZATIONS
+if [[ "$YES_FLAG" != true && -z "$SPECIALIZATIONS" ]]; then
+  read -p "Team Specializations (comma-separated, default: Frontend,Backend,Testing): " SPECIALIZATIONS
+fi
 SPECIALIZATIONS=${SPECIALIZATIONS:-"Frontend,Backend,Testing"}
 
-read -p "Custom Tags (comma-separated, default: Performance,UX,Security): " CUSTOM_TAGS
+if [[ "$YES_FLAG" != true && -z "$CUSTOM_TAGS" ]]; then
+  read -p "Custom Tags (comma-separated, default: Performance,UX,Security): " CUSTOM_TAGS
+fi
 CUSTOM_TAGS=${CUSTOM_TAGS:-"Performance,UX,Security"}
 
 echo -e "${BLUE}Setting up Copilot Framework for: ${PROJECT_NAME}${NC}"
@@ -51,7 +156,7 @@ mkdir -p docs/{adr,framework}
 # Create stubs for referenced files
 echo -e "${YELLOW}Creating stubs for referenced files...${NC}"
 touch README.md
-cat > docs/requirements.md << EOF
+write_file docs/requirements.md << EOF
 # Requirements Document
 
 ## Stakeholder Analysis
@@ -63,7 +168,7 @@ cat > docs/requirements.md << EOF
 ## Constraints and Dependencies
 EOF
 
-cat > docs/user-stories.md << EOF
+write_file docs/user-stories.md << EOF
 ## Epics
 # List of high-level epics for the project
 
@@ -101,26 +206,25 @@ Lead Management → Opportunity Tracking → Customer History
 3. Customer History (Medium)
 EOF
 
-mkdir -p docs/architecture
-cat > docs/architecture/overview.md << EOF
+write_file docs/architecture/overview.md << EOF
 # Architecture Overview
 
 ## System Overview
 EOF
 
-cat > docs/architecture/components.md << EOF
+write_file docs/architecture/components.md << EOF
 # Architecture Components
 
 ## Component Details
 EOF
 
-cat > docs/architecture/integrations.md << EOF
+write_file docs/architecture/integrations.md << EOF
 # Architecture Integrations
 
 ## Integration Points
 EOF
 
-cat > docs/architecture/deployment.md << EOF
+write_file docs/architecture/deployment.md << EOF
 # Deployment Architecture
 
 ## Deployment Details
@@ -128,7 +232,7 @@ EOF
 
 # Generate .github/copilot-instructions.md
 echo -e "${YELLOW}Creating copilot-instructions.md...${NC}"
-cat > .github/copilot-instructions.md << EOF
+write_file .github/copilot-instructions.md << EOF
 # ${PROJECT_NAME} - Development Instructions
 
 # Project Context
@@ -165,7 +269,7 @@ EOF
 
 # Generate team-config.yml
 echo -e "${YELLOW}Creating team-config.yml...${NC}"
-cat > .github/config/team-config.yml << EOF
+write_file .github/config/team-config.yml << EOF
 team:
   name: "${TEAM_NAME}"
   project: "${PROJECT_NAME}"
@@ -193,7 +297,7 @@ EOF
 
 # Generate phase-config.yml
 echo -e "${YELLOW}Creating phase-config.yml...${NC}"
-cat > .github/config/phase-config.yml << EOF
+write_file .github/config/phase-config.yml << EOF
 phases:
   "01-requirements":
     priority: critical
@@ -278,7 +382,7 @@ EOF
 
 # Generate tags.yml
 echo -e "${YELLOW}Creating tags.yml...${NC}"
-cat > .github/config/tags.yml << EOF
+write_file .github/config/tags.yml << EOF
 # Tag Taxonomy for Memory Management
 
 phases:
@@ -315,7 +419,7 @@ EOF
 echo -e "${YELLOW}Creating prompt templates...${NC}"
 
 # 01-requirements.prompt.md
-cat > .github/prompts/01-requirements.prompt.md << 'PROMPT1'
+write_file .github/prompts/01-requirements.prompt.md << 'PROMPT1'
 ---
 mode: "agent"
 tools: ["codebase"]
@@ -397,7 +501,7 @@ Dependencies: None
 PROMPT1
 
 # 02-user-stories.prompt.md
-cat > .github/prompts/02-user-stories.prompt.md << 'PROMPT2'
+write_file .github/prompts/02-user-stories.prompt.md << 'PROMPT2'
 ---
 mode: "agent"
 tools: ["codebase"]
@@ -443,7 +547,7 @@ Tag: #UserStories #Product
 PROMPT2
 
 # 03-architecture.prompt.md
-cat > .github/prompts/03-architecture.prompt.md << 'PROMPT3'
+write_file .github/prompts/03-architecture.prompt.md << 'PROMPT3'
 ---
 mode: "agent"
 tools: ["codebase"]
@@ -556,7 +660,7 @@ PROMPT3
 echo -e "${YELLOW}Creating remaining prompt files...${NC}"
 
 # 04-architecture-docs.prompt.md
-cat > .github/prompts/04-architecture-docs.prompt.md << 'PROMPT4'
+write_file .github/prompts/04-architecture-docs.prompt.md << 'PROMPT4'
 ---
 mode: "agent"
 tools: ["codebase"]
@@ -603,7 +707,7 @@ Review your output for:
 PROMPT4
 
 # 05-implementation.prompt.md
-cat > .github/prompts/05-implementation.prompt.md << 'PROMPT5'
+write_file .github/prompts/05-implementation.prompt.md << 'PROMPT5'
 ---
 mode: "agent"
 tools: ["codebase"]
@@ -671,7 +775,7 @@ for i in {6..16}; do
     fi
 
     filename=$(printf "%02d" $i)
-    cat > .github/prompts/${filename}-${name}.prompt.md << EOF
+    write_file .github/prompts/${filename}-${name}.prompt.md << EOF
 ---
 mode: "agent"
 tools: ${tools}
@@ -704,7 +808,7 @@ done
 
 # Generate workflow diagrams
 echo -e "${YELLOW}Creating workflow diagrams...${NC}"
-cat > docs/framework/workflow-diagrams.md << 'DIAGRAMS'
+write_file docs/framework/workflow-diagrams.md << 'DIAGRAMS'
 # Project Workflow Diagrams
 
 ## Phase Flow Diagram
@@ -786,7 +890,7 @@ graph TD
 DIAGRAMS
 
 echo -e "${YELLOW}Creating memory.md...${NC}"
-cat > docs/memory.md << 'EOF'
+write_file docs/memory.md << EOF
 ## ${PROJECT_NAME} Memory
 
 ```mermaid
@@ -845,7 +949,7 @@ EOF
 
 # Generate usage guide
 echo -e "${YELLOW}Creating usage guide...${NC}"
-cat > docs/framework/usage-guide.md << EOF
+write_file docs/framework/usage-guide.md << EOF
 # ${PROJECT_NAME} Framework Usage Guide
 
 ## Quick Start
@@ -967,7 +1071,7 @@ EOF
 
 # Create empty ADR directory with template
 echo -e "${YELLOW}Setting up ADR directory...${NC}"
-cat > docs/adr/.gitkeep << EOF
+write_file docs/adr/.gitkeep << EOF
 # Architecture Decision Records
 
 This directory contains Architecture Decision Records (ADRs) following the format:
