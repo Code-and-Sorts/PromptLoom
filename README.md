@@ -73,12 +73,14 @@ You’ll be prompted for project name, team, tech stack, specializations, and cu
 You are a Business Analyst working on the project.
 
 ## Your Task
+
 1. Stakeholder Analysis
 2. Functional Requirements
 3. Non-functional Requirements
 4. Constraints
 
 ## Output Format
+
 Create a comprehensive requirements document with:
 - Stakeholder Analysis
 - Functional Requirements
