@@ -50,8 +50,9 @@ jobs:
           grep -q "This is CI Project built with CI Stack." .github/copilot-instructions.md
 
           grep -q "specializations:" .github/config/team-config.yml
-          grep -q "- \"Frontend\"" .github/config/team-config.yml
-          grep -q "- \"Backend\"" .github/config/team-config.yml
+          # Patterns that start with '-' must use '--' to stop option parsing
+          grep -Fq -- '- "Frontend"' .github/config/team-config.yml
+          grep -Fq -- '- "Backend"' .github/config/team-config.yml
 
           grep -q "custom:" .github/config/tags.yml
           grep -q "Performance" .github/config/tags.yml
