@@ -775,6 +775,8 @@ for i in {6..16}; do
     fi
 
     filename=$(printf "%02d" $i)
+    desc_capitalized="$(echo "${desc}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+    name_capitalized="$(echo "${name}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
     write_file .github/prompts/${filename}-${name}.prompt.md << EOF
 ---
 mode: "agent"
@@ -782,7 +784,7 @@ tools: ${tools}
 description: "${desc}"
 ---
 
-# ${desc^}
+# ${desc_capitalized}
 
 You are a ${role} working on the project.
 
@@ -802,7 +804,7 @@ After completion, update #docs/memory.md with:
 - Important decisions made
 - Next steps identified
 
-Tag: #${name^} #$(echo "${PROJECT_NAME}" | tr -d ' ')
+Tag: #${name_capitalized} #$(echo "${PROJECT_NAME}" | tr -d ' ')
 EOF
 done
 
