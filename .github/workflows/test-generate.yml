@@ -25,7 +25,10 @@ jobs:
             --team "CI Team" \
             --stack "CI Stack" \
             --specializations "Frontend,Backend,Testing" \
-            --tags "Performance,UX,Security"
+            --tags "Performance,UX,Security" \
+            --cap-unit "npm test" \
+            --cap-e2e "npx playwright test" \
+            --cap-lint "npx eslint ."
 
       - name: Assert outputs
         shell: bash
@@ -33,6 +36,7 @@ jobs:
           set -euo pipefail
           files=(
             ".github/copilot-instructions.md"
+            ".github/config/capabilities.yml"
             ".github/config/team-config.yml"
             ".github/config/phase-config.yml"
             ".github/config/tags.yml"
@@ -40,8 +44,12 @@ jobs:
             "docs/requirements.md"
             "docs/user-stories.md"
             "docs/architecture/overview.md"
+            "docs/architecture/components.md"
+            "docs/architecture/integrations.md"
+            "docs/architecture/deployment.md"
             "docs/framework/workflow-diagrams.md"
-            "docs/memory.md"
+            "docs/memory/index.md"
+            "docs/memory/01-requirements.md"
             "docs/framework/usage-guide.md"
           )
           for f in "${files[@]}"; do
@@ -54,6 +62,19 @@ jobs:
           grep -q "Team: CI Team" .github/copilot-instructions.md
           grep -q "This is CI Project built with CI Stack." .github/copilot-instructions.md
 
+          # Validate capability bindings in copilot-instructions.md
+          grep -q "Unit tests command: npm test" .github/copilot-instructions.md
+          grep -q "E2E tests command: npx playwright test" .github/copilot-instructions.md
+          grep -q "Linter command: npx eslint ." .github/copilot-instructions.md
+
+          # Validate capabilities.yml
+          grep -q "unit_test:" .github/config/capabilities.yml
+          grep -q "command: npm test" .github/config/capabilities.yml
+          grep -q "e2e_test:" .github/config/capabilities.yml
+          grep -q "command: npx playwright test" .github/config/capabilities.yml
+          grep -q "linter:" .github/config/capabilities.yml
+          grep -q "command: npx eslint ." .github/config/capabilities.yml
+
           grep -q "specializations:" .github/config/team-config.yml
           # Patterns that start with '-' must use '--' to stop option parsing
           grep -Fq -- '- "Frontend"' .github/config/team-config.yml
@@ -63,13 +84,53 @@ jobs:
           grep -q "Performance" .github/config/tags.yml
           grep -q "UX" .github/config/tags.yml
 
-          grep -q "^## CI Project Memory" docs/memory.md
-          grep -q "Project initialized with Copilot-centric prompt framework." docs/memory.md
+          # Validate memory structure
+          grep -q "CI Project — Project Memory Index" docs/memory/index.md
+          grep -q "Project initialized; per-phase memory scaffolds created." docs/memory/index.md
+          grep -q "phase: 01-requirements" docs/memory/01-requirements.md
 
-          # Ensure a reasonable number of prompts were generated
+          # Ensure all 16 prompts were generated
           test -d ".github/prompts"
           count=$(ls -1 .github/prompts/*.prompt.md | wc -l)
-          if [ "$count" -lt 5 ]; then
-            echo "Expected at least 5 prompt templates, found $count"
+          if [ "$count" -ne 16 ]; then
+            echo "Expected exactly 16 prompt templates, found $count"
+            ls -1 .github/prompts/
             exit 1
           fi
+
+          # Validate specific prompts exist
+          test -f ".github/prompts/16-customize.prompt.md"
+          test -f ".github/prompts/10-security.prompt.md"
+          test -f ".github/prompts/15-integration-test.prompt.md"
+
+          # Ensure memory files were generated
+          memory_count=$(ls -1 docs/memory/*.md | wc -l)
+          if [ "$memory_count" -lt 16 ]; then
+            echo "Expected at least 16 memory files, found $memory_count"
+            ls -1 docs/memory/
+            exit 1
+          fi
+
+      - name: Test suggest flag
+        shell: bash
+        run: |
+          # Clean up previous run
+          rm -rf test-suggest && mkdir test-suggest && cd test-suggest
+
+          # Run with --suggest flag
+          bash ../generate.sh -y --suggest \
+            --project "Suggest Test" \
+            --team "Test Team" \
+            --stack "TypeScript/React"
+
+          # Validate capability_suggestions.yml was created
+          test -f ".github/config/capability_suggestions.yml" || {
+            echo "Missing capability_suggestions.yml"
+            exit 1
+          }
+
+          # Validate suggestions structure
+          grep -q "suggestions:" .github/config/capability_suggestions.yml
+          grep -q "unit_test:" .github/config/capability_suggestions.yml
+          grep -q "evidence:" .github/config/capability_suggestions.yml
+          grep -q "confidence:" .github/config/capability_suggestions.yml
