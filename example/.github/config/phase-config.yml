@@ -1,0 +1,80 @@
+phases:
+  "01-requirements":
+    priority: critical
+    estimatedTokens: 2000
+    dependencies: []
+
+  "02-user-stories":
+    priority: high
+    estimatedTokens: 1500
+    dependencies: ["01-requirements"]
+
+  "03-architecture":
+    priority: critical
+    estimatedTokens: 3000
+    dependencies: ["01-requirements", "02-user-stories"]
+
+  "04-architecture-docs":
+    priority: medium
+    estimatedTokens: 1500
+    dependencies: ["03-architecture"]
+
+  "05-implementation":
+    priority: high
+    estimatedTokens: 4000
+    dependencies: ["03-architecture"]
+
+  "06-code-docs":
+    priority: medium
+    estimatedTokens: 1500
+    dependencies: ["05-implementation"]
+
+  "07-testing":
+    priority: high
+    estimatedTokens: 2500
+    dependencies: ["05-implementation"]
+
+  "08-deployment":
+    priority: high
+    estimatedTokens: 2000
+    dependencies: ["07-testing"]
+
+  "09-release-notes":
+    priority: medium
+    estimatedTokens: 1000
+    dependencies: ["08-deployment"]
+
+  "10-security":
+    priority: critical
+    estimatedTokens: 2500
+    dependencies: ["05-implementation"]
+
+  "11-memory":
+    priority: low
+    estimatedTokens: 500
+    dependencies: []
+
+  "12-memory-window":
+    priority: low
+    estimatedTokens: 500
+    dependencies: ["11-memory"]
+
+  "13-memory-sync":
+    priority: medium
+    estimatedTokens: 1000
+    dependencies: ["11-memory"]
+
+  "14-error-recovery":
+    priority: high
+    estimatedTokens: 1500
+    dependencies: []
+
+  "15-integration-test":
+    priority: high
+    estimatedTokens: 2000
+    dependencies: []
+
+  "16-customize":
+    priority: medium
+    estimatedTokens: 1500
+    dependencies: []

@@ -1,0 +1,32 @@
+# Tag Taxonomy for Memory Management
+
+phases:
+  - Requirements
+  - UserStories
+  - Architecture
+  - Implementation
+  - Testing
+  - Deployment
+  - Security
+  - Release
+  - Memory
+  - Recovery
+
+domains:
+  - Frontend
+  - Backend
+  - Database
+  - Infrastructure
+  - DevOps
+  - Security
+
+priorities:
+  - Critical
+  - High
+  - Medium
+  - Low
+
+custom:
+  - Performance
+  - UX
+  - Security

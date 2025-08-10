@@ -221,7 +221,7 @@ echo -e "${BLUE}Setting up Copilot Framework for: ${PROJECT_NAME}${NC}"
 # Create directory structure
 echo -e "${YELLOW}Creating directory structure...${NC}"
 mkdir -p .github/{prompts,config}
-mkdir -p docs/{adr,framework}
+mkdir -p docs/{adr,framework,memory,memory-archive}
 
 # Generate capabilities.yml
 echo -e "${YELLOW}Creating capabilities.yml...${NC}"
@@ -394,10 +394,13 @@ Specializations: ${SPECIALIZATIONS}
 - Bind and use capabilities from .github/config/capabilities.yml (tools are suggestions, not mandates)
 
 # Memory Management
-- Before starting any phase, read the latest 1,000 tokens from docs/memory.md
-- Filter for entries tagged with current phase from the past 7 days
-- After completing work, update memory using the appropriate prompt template
-- Tag all entries with relevant phase tags
+- Before starting any phase, read the relevant **per-phase** memory file under \`docs/memory/\` (e.g., \`03-architecture.md\`) and skim \`docs/memory/index.md\` "Recent Activity"
+- Load only the **last few entries** from the current phase file to reduce context bloat
+- When you finish a phase, **append a new entry** to that phase's file using the schema at the top of the file
+- Include \`sources:\` links (ADRs, PRs, docs) and set a \`confidence\` level
+- Add a one-line summary + link in \`docs/memory/index.md\` under "Recent Activity"
+- Use tags from \`.github/config/tags.yml\`
+- Prune or archive older content into \`docs/memory-archive/\` when entries get large
 
 # Phase Workflow
 1. Load current phase prompt from .github/prompts/
@@ -407,7 +410,7 @@ Specializations: ${SPECIALIZATIONS}
 5. Run self-critique if enabled in frontmatter
 
 # Quality Gates
-- All code must pass: npm run lint && npm run test
+- All code must pass linting and tests as bound in capabilities.yml; if unbound, propose and record
 - Documentation must be updated for new features
 - Security scans must pass before merging
 - ADRs required for architectural changes
@@ -587,7 +590,7 @@ description: "Gather project requirements and analyze stakeholders"
 You are a Business Analyst working on the project.
 
 ## Context Loading
-Load the last 1,000 tokens from docs/memory.md tagged with #Requirements from the past 7 days.
+Read recent entries from docs/memory/01-requirements.md and skim docs/memory/index.md "Recent Activity".
 
 ## Your Task
 1. **Stakeholder Analysis**: Identify key stakeholders and their needs
@@ -625,7 +628,7 @@ Create a comprehensive requirements document with:
 - External dependencies
 
 ## Memory Update Instructions
-After completion, update docs/memory.md with:
+After completion, append a new entry to docs/memory/01-requirements.md (use the file's schema) and add a one-line summary + link in docs/memory/index.md:
 - Key stakeholders identified
 - Major requirements categories
 - Critical constraints discovered
@@ -670,7 +673,7 @@ You are a Product Owner creating user stories for the project.
 
 ## Context
 Review the requirements document: #docs/requirements.md
-Check project memory: #docs/memory.md
+Check project memory: #docs/memory/index.md and #docs/memory/02-user-stories.md
 
 ## Your Task
 Convert the documented requirements into well-structured user stories following the format:
@@ -693,7 +696,7 @@ For each story include:
 - [ ] Accessibility requirements
 
 ## Memory Update
-Update #docs/memory.md with:
+Append to #docs/memory/02-user-stories.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Number of stories created
 - Key epics identified
 - Prioritization rationale
@@ -715,7 +718,7 @@ description: "Design system architecture and create technical decisions"
 You are a Software Architect designing the system.
 
 ## Context Loading
-Load the last 1,000 tokens from docs/memory.md tagged with #Architecture OR #Requirements from the past 7 days.
+Read recent entries from docs/memory/03-architecture.md and docs/memory/01-requirements.md; skim docs/memory/index.md "Recent Activity".
 
 ## Your Task
 1. **High-Level Design**: Define system components and relationships
@@ -766,7 +769,7 @@ graph TD
 - **Infrastructure**: [Deployment platform]
 
 ## Memory Update Instructions
-Update docs/memory.md with:
+Append to docs/memory/03-architecture.md (use the file's schema) and add a one-line summary + link in docs/memory/index.md:
 - Architecture decisions made
 - Technology choices and rationale
 - Key components identified
@@ -830,7 +833,7 @@ You are a Technical Writer documenting the architecture.
 ## Context
 Review the architecture ADR: #docs/adr/
 Check existing documentation: #docs/
-Reference memory: #docs/memory.md
+Reference memory: #docs/memory/index.md and #docs/memory/04-architecture-docs.md
 
 ## Your Task
 Create comprehensive architecture documentation including:
@@ -847,7 +850,7 @@ Create comprehensive architecture documentation including:
 - docs/architecture/deployment.md
 
 ## Memory Update
-After completion, update #docs/memory.md with:
+Append to #docs/memory/04-architecture-docs.md and add a one-line summary in #docs/memory/index.md:
 - Key accomplishments from this phase
 - Important decisions made
 - Next steps identified
@@ -894,7 +897,7 @@ Reference codebase: #codebase
 - Implement proper validation
 
 ## Memory Update
-After completion, update #docs/memory.md with:
+Append to #docs/memory/05-implementation.md and add a one-line summary in #docs/memory/index.md:
 - Key accomplishments from this phase
 - Important decisions made
 - Next steps identified
@@ -921,12 +924,12 @@ description: "Generate comprehensive code documentation with language-agnostic g
 # Code Documentation Phase
 
 You are a Developer producing code-level documentation that is **language-agnostic** and repeatable.
-If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+If a capability is unbound (command = null), propose 2-3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
 
 ## Inputs
 - Source code: #codebase
 - Architecture docs: #docs/architecture/
-- Memory context: #docs/memory.md
+- Memory context: #docs/memory/index.md and #docs/memory/06-code-docs.md
 - Team/stack hints: #.github/config/team-config.yml
 - Capabilities config: #.github/config/capabilities.yml
 
@@ -976,7 +979,7 @@ If none fit, proceed with **Strategy B** (fallback Markdown stubs).
 - Architecture/ADR cross-links included; no broken links.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/06-code-docs.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Chosen strategy and rationale.
 - Gaps identified and follow-ups.
 - Link to `docs/api` and updated `README.md`.
@@ -1000,7 +1003,7 @@ description: "Define and execute unit, integration, e2e, contract, and performan
 # Testing Phase
 
 You are a QA Engineer defining and executing a comprehensive test strategy.
-If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+If a capability is unbound (command = null), propose 2-3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
 
 ## Inputs
 - Requirements: #docs/requirements.md
@@ -1053,7 +1056,7 @@ If a capability is unbound (command = null), propose 2–3 options for this stac
 - Contracts exist for any external service boundaries.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/07-testing.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Coverage summary.
 - Flaky areas and mitigation.
 - Links to reports.
@@ -1077,7 +1080,7 @@ description: "Design and document deployment strategy, packaging, and environmen
 # Deployment Phase
 
 You are a DevOps Engineer designing deployment and promotion.
-If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+If a capability is unbound (command = null), propose 2-3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
 
 ## Inputs
 - ADRs: #docs/adr/
@@ -1116,7 +1119,7 @@ If a capability is unbound (command = null), propose 2–3 options for this stac
 - Promotion path documented with preconditions.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/08-deployment.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Strategy chosen and rationale.
 - Rollback trigger conditions.
 - Links to deployment docs.
@@ -1163,7 +1166,7 @@ You are a Technical Writer creating release notes.
 - Breaking changes flagged with migration steps.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/09-release-notes.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Scope of release.
 - Known issues.
 - Links to artifacts.
@@ -1187,7 +1190,7 @@ description: "Perform security review, threat model (STRIDE), and mitigation pla
 # Security Review Phase
 
 You are a Security Engineer.
-If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+If a capability is unbound (command = null), propose 2-3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
 
 ## Inputs
 - Codebase: #codebase
@@ -1223,7 +1226,7 @@ If a capability is unbound (command = null), propose 2–3 options for this stac
 - ≥ 1 actionable mitigation per STRIDE category found.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/10-security.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Risks identified.
 - Mitigation priorities.
 - Links to security docs.
@@ -1250,17 +1253,19 @@ You are a Memory Curator.
 
 ## Inputs
 - Outputs from the just-completed phase.
-- #docs/memory.md
+- The relevant per-phase memory file under `docs/memory/` (match your phase).
+- docs/memory/index.md
 
 ## Tasks
-1) Append a new entry with:
-   - Date, Phase, Tags
-   - Summary (≤ 10 lines)
-   - Decisions and links to artifacts
-2) Cross-link ADRs or docs created.
+1) Append a new entry to the matching per-phase file with:
+   - Frontmatter: phase, tags, sources, last_updated, confidence, status
+   - Sections: Summary, Key Decisions, Evidence, Open Questions, Links
+2) Add a one-line summary with link under "Recent Activity" in docs/memory/index.md.
+3) Ensure each claim links to a source (ADR, PR, doc) in `sources:`.
 
 ## Deliverables
-- New entry appended to `docs/memory.md` under “Current Status”.
+- New entry appended to the relevant `docs/memory/<phase>.md`
+- One-line summary added to `docs/memory/index.md`
 
 ## Acceptance Criteria
 - Entry contains links and tags.
@@ -1287,15 +1292,16 @@ You are a Memory Curator.
 
 ## Inputs
 - team-config retention: #.github/config/team-config.yml
-- #docs/memory.md
+- docs/memory/index.md
+- All per-phase files under docs/memory/
 
 ## Tasks
-1) Identify entries older than configured retention (default: `normal: 14` days).
-2) Move detailed content to `docs/memory-archive/YYYY-WW.md`.
-3) Replace original entries with a one-line summary + archive link.
+1) For each per-phase file, move entries older than the configured retention to `docs/memory-archive/YYYY-WW.md`.
+2) In the original per-phase file, replace moved content with a one-line pointer + archive link.
+3) Add a summary of pruned entries to docs/memory/index.md "Recent Activity".
 
 ## Deliverables
-- Updated `docs/memory.md`.
+- Updated per-phase files in `docs/memory/`.
 - New archive file created for the week.
 
 ## Acceptance Criteria
@@ -1323,16 +1329,17 @@ You are a Memory Curator.
 
 ## Inputs
 - Latest commits from all contributors.
-- #docs/memory.md
+- docs/memory/index.md
+- All per-phase files under docs/memory/
 
 ## Tasks
-1) Merge memory entries added by others.
-2) Resolve conflicts by retaining newest summaries and preserving all links.
-3) Add a “Sync Note” entry with what changed.
+1) Merge entries across per-phase files added by others.
+2) Resolve conflicts; if duplication remains, keep newest summary and preserve all source links.
+3) Add a "Sync Note" entry in docs/memory/13-memory-sync.md and link it from docs/memory/index.md.
 
 ## Deliverables
-- Reconciled `docs/memory.md`.
-- `docs/memory-sync/notes-YYYY-MM-DD.md` with diff summary.
+- Reconciled per-phase files in `docs/memory/`.
+- Sync summary appended to `docs/memory/13-memory-sync.md` with diff details.
 
 ## Acceptance Criteria
 - No unresolved conflict markers.
@@ -1378,7 +1385,7 @@ You are a Recovery Specialist.
 - Postmortem includes “lessons learned”.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/14-error-recovery.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Root cause and fix link.
 - Any follow-up tasks.
 
@@ -1425,7 +1432,7 @@ You are a QA Engineer.
 - Results document includes environment and data setup.
 
 ## Memory Update
-Append to #docs/memory.md with links to tests and results.
+Append to #docs/memory/15-integration-test.md (schema at top) and add a one-line summary in #docs/memory/index.md with links to tests and results.
 
 Tags: #IntegrationTest #Quality
 
@@ -1466,7 +1473,7 @@ You are a Framework Engineer.
 - Standards reflected in Copilot instructions.
 
 ## Memory Update
-Append to #docs/memory.md:
+Append to #docs/memory/16-customize.md (schema at top) and add a one-line summary in #docs/memory/index.md:
 - Summary of customizations.
 - Any new scripts/paths.
 
@@ -1560,63 +1567,98 @@ graph TD
 ```
 DIAGRAMS
 
-echo -e "${YELLOW}Creating memory.md...${NC}"
-write_file docs/memory.md << EOF
-## ${PROJECT_NAME} Memory
+echo -e "${YELLOW}Creating structured memory (index + per-phase files)...${NC}"
 
-~~~mermaid
-timeline
-    title Project Timeline
-    $(date +%Y-%m-%d) : Project Initialized
-~~~
+# Memory index
+write_file docs/memory/index.md << EOF
+# ${PROJECT_NAME} — Project Memory Index
 
-## Current Status
-Project initialized with Copilot-centric prompt framework.
+> Structured memory to minimize hallucinations and improve retrieval.
+> Keep entries concise and link to source-of-truth docs (requirements, ADRs, tests).
 
-### Team Configuration
-- **Project**: ${PROJECT_NAME}
-- **Team**: ${TEAM_NAME}
-- **Tech Stack**: ${TECH_STACK}
-- **Specializations**: ${SPECIALIZATIONS}
+## How to use
+- When working in a phase, read the **matching per-phase memory file** below.
+- Append new entries to that file using the schema shown in each file header.
+- Keep this index lean; add a one-line summary under "Recent Activity" and link to the per-phase entry.
 
-### Framework Setup
-- ✅ Directory structure created
-- ✅ Prompt templates generated
-- ✅ Configuration files ready
-- ✅ Memory system initialized
+## Per-Phase Files
+- [01 Requirements](01-requirements.md)
+- [02 User Stories](02-user-stories.md)
+- [03 Architecture](03-architecture.md)
+- [04 Architecture Docs](04-architecture-docs.md)
+- [05 Implementation](05-implementation.md)
+- [06 Code Docs](06-code-docs.md)
+- [07 Testing](07-testing.md)
+- [08 Deployment](08-deployment.md)
+- [09 Release Notes](09-release-notes.md)
+- [10 Security](10-security.md)
+- [11 Memory Update](11-memory.md)
+- [12 Memory Window](12-memory-window.md)
+- [13 Memory Sync](13-memory-sync.md)
+- [14 Error Recovery](14-error-recovery.md)
+- [15 Integration Test](15-integration-test.md)
+- [16 Customize](16-customize.md)
 
-### Phase Outputs
-# This section summarizes outputs from each phase for traceability.
-
-#### Requirements Phase
-- Stakeholder analysis, functional and non-functional requirements, constraints stored in docs/requirements.md
-
-#### User Stories Phase
-- Epics and detailed user stories stored in docs/user-stories.md
-- Story map and prioritization documented
-
-#### Architecture Phase
-- Architecture decisions and diagrams stored in docs/adr/ and docs/architecture/
-
-#### Implementation Phase
-- Core components, API endpoints, and models implemented
-
-... (add summaries for other phases as completed)
-
-### Next Steps
-1. Begin Phase 1: Requirements Gathering
-2. Customize team configuration if needed
-3. Set up development environment
-4. Initialize project documentation
-
-### Tags
-#ProjectInit #FrameworkSetup #$(echo "${PROJECT_NAME}" | tr -d ' ')
-
----
+## Recent Activity
+- $(date +%Y-%m-%d) — Project initialized; per-phase memory scaffolds created.
 
 ## Archive
-[Older entries will be moved here after 14 days]
+Older entries and large sections should be moved into: \`../memory-archive/\`
 EOF
+
+# Helper to write a per-phase memory file with schema
+write_phase_mem() {
+  local file="$1"
+  local phase="$2"
+  write_file "docs/memory/${file}" << EOF
+---
+phase: ${phase}
+tags: []
+sources: []
+last_updated: $(date +%F)
+confidence: medium
+status: active
+---
+
+# Summary
+<!-- 3-10 lines max. What changed? Why? -->
+
+# Key Decisions
+- Decision: ...
+- Rationale: ...
+- Owner: ...
+- Date: $(date +%F)
+
+# Evidence
+- Source: docs/... (link)
+- PR/Commit: ...
+
+# Open Questions
+- [ ] ...
+
+# Links
+- Related ADR: docs/adr/...
+- Related Doc: docs/...
+EOF
+}
+
+# Generate per-phase memory files
+write_phase_mem "01-requirements.md"       "01-requirements"
+write_phase_mem "02-user-stories.md"       "02-user-stories"
+write_phase_mem "03-architecture.md"       "03-architecture"
+write_phase_mem "04-architecture-docs.md"  "04-architecture-docs"
+write_phase_mem "05-implementation.md"     "05-implementation"
+write_phase_mem "06-code-docs.md"          "06-code-docs"
+write_phase_mem "07-testing.md"            "07-testing"
+write_phase_mem "08-deployment.md"         "08-deployment"
+write_phase_mem "09-release-notes.md"      "09-release-notes"
+write_phase_mem "10-security.md"           "10-security"
+write_phase_mem "11-memory.md"             "11-memory"
+write_phase_mem "12-memory-window.md"      "12-memory-window"
+write_phase_mem "13-memory-sync.md"        "13-memory-sync"
+write_phase_mem "14-error-recovery.md"     "14-error-recovery"
+write_phase_mem "15-integration-test.md"   "15-integration-test"
+write_phase_mem "16-customize.md"          "16-customize"
 
 # Generate usage guide
 echo -e "${YELLOW}Creating usage guide...${NC}"
@@ -1630,9 +1672,9 @@ write_file docs/framework/usage-guide.md << EOF
 2. Type \`/01-requirements\` (or another phase name) to load the prompt phase (example, use backticks in markdown)
 
 ### 2. Memory Management
-- **Before each phase**: Read current memory context from \`docs/memory.md\`
-- **After each phase**: Update memory using the provided template
-- **Weekly**: Review and prune memory entries as needed
+- **Before each phase**: Read the matching per-phase file in \`docs/memory/\` and skim \`docs/memory/index.md\`.
+- **After each phase**: Append a structured entry (frontmatter + sections) to the per-phase file and add a one-line summary in the index.
+- **Weekly**: Prune big/old entries to \`docs/memory-archive/\` and leave a pointer in the per-phase file.
 
 ### 3. Team Collaboration
 - Use memory sync prompts for team coordination
@@ -1687,7 +1729,12 @@ ${PROJECT_NAME}/
 │   └── config/                      # Team configuration
 └── docs/
     ├── adr/                         # Architecture decisions
-    ├── memory.md                    # Project memory
+    ├── memory/                      # Structured per-phase memory
+    │   ├── index.md                 # Memory index and navigation
+    │   ├── 01-requirements.md       # Requirements phase memory
+    │   ├── 02-user-stories.md       # User stories phase memory
+    │   └── ...                      # Other phase memory files
+    ├── memory-archive/              # Archived memory entries
     └── framework/                   # Framework documentation
         ├── usage-guide.md           # This file
         └── workflow-diagrams.md     # Mermaid diagrams

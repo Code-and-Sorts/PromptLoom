@@ -1,0 +1,27 @@
+team:
+  name: "Core"
+  project: "Demo"
+  techStack: "TypeScript/React/Node"
+  specializations:
+    - "Frontend"
+    - "Backend"
+    - "Testing"
+
+customizations:
+  tags:
+    custom:
+      - "Performance"
+      - "UX"
+      - "Security"
+
+  memory:
+    retention:
+      critical: 60  # days
+      normal: 14    # days
+      ephemeral: 7  # days
+
+  phases:
+    all:
+      additionalStandards:
+        - "Follow TypeScript/React/Node best practices"
+        - "Ensure accessibility compliance"

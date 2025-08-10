@@ -1,0 +1,28 @@
+capabilities:
+  unit_test:
+    tool: null
+    command: null
+    notes: "Runs fast, isolated tests; target ≥80% coverage"
+  e2e_test:
+    tool: null
+    command: null
+    notes: "Covers critical user journeys end-to-end"
+  contract_test:
+    tool: null
+    command: null
+    notes: "Verifies producer/consumer API contracts"
+  performance_test:
+    tool: null
+    command: null
+    notes: "Establishes baseline throughput/latency with thresholds"
+  docs_generator:
+    tool: null
+    command: null
+    notes: "Builds API/code docs; fallback to Markdown stubs if unbound"
+  linter:
+    tool: null
+    command: null
+    notes: "Static analysis and style checks"
+policies:
+  coverage_threshold: 0.80
+  allow_unbound_capabilities: true

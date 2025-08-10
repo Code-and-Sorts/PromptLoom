@@ -1,0 +1,9 @@
+# Architecture Decision Records
+
+This directory contains Architecture Decision Records (ADRs) following the format:
+- Filename: YYYYMMDD-short-title.md
+- Status: proposed | accepted | deprecated
+- Sections: Context → Decision → Consequences
+
+Example:
+docs/adr/20240715-database-selection.md
