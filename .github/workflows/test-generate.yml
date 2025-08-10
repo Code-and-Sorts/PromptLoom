@@ -134,3 +134,54 @@ jobs:
           grep -q "unit_test:" .github/config/capability_suggestions.yml
           grep -q "evidence:" .github/config/capability_suggestions.yml
           grep -q "confidence:" .github/config/capability_suggestions.yml
+
+  remote-install:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test remote installation
+        shell: bash
+        run: |
+          # Create a test directory
+          mkdir -p remote-test && cd remote-test
+
+          # Test the remote curl installation
+          bash <(curl -sSL https://raw.githubusercontent.com/Code-and-Sorts/PromptLoom/main/generate.sh) \
+            -y --force \
+            --project "Remote Test" \
+            --team "Remote Team" \
+            --stack "Python/FastAPI" \
+            --cap-unit "pytest" \
+            --cap-lint "ruff check"
+
+          # Validate core files were created
+          test -f ".github/copilot-instructions.md" || {
+            echo "Missing copilot-instructions.md"
+            exit 1
+          }
+
+          test -f ".github/config/capabilities.yml" || {
+            echo "Missing capabilities.yml"
+            exit 1
+          }
+
+          # Validate capability bindings worked
+          grep -q "Unit tests command: pytest" .github/copilot-instructions.md
+          grep -q "Linter command: ruff check" .github/copilot-instructions.md
+
+          # Validate project customization worked
+          grep -q "Remote Test - Development Instructions" .github/copilot-instructions.md
+          grep -q "Team: Remote Team" .github/copilot-instructions.md
+
+          # Ensure prompts directory exists with files
+          test -d ".github/prompts" || {
+            echo "Missing prompts directory"
+            exit 1
+          }
+
+          count=$(ls -1 .github/prompts/*.prompt.md | wc -l)
+          if [ "$count" -ne 16 ]; then
+            echo "Expected 16 prompts, found $count"
+            exit 1
+          fi
+
+          echo "Remote installation test passed!"
