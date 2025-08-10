@@ -4,8 +4,6 @@
 
 Built for GitHub Copilot Chat. Interested in Cursor, Claude, or other agents? Open an issue to help prioritize first-class support.
 
-⸻
-
 ## Why PromptLoom?
 - **Clarity**: Each SDLC phase ships with a ready-to-run agent prompt.
 - **Consistency**: Standard structure for prompts, ADRs, tags, and governance.
@@ -13,22 +11,20 @@ Built for GitHub Copilot Chat. Interested in Cursor, Claude, or other agents? Op
 - **Flexible stacks**: Language-agnostic; you bind capabilities (not tools).
 - **Copilot-native**: Prompts and docs are tuned for GitHub Copilot Chat.
 
-⸻
-
 ## How It Works (at a glance)
 
 ```mermaid
 flowchart TD
-    subgraph "Setup (Run once per project)"
+    subgraph "Setup (Run once)"
         A[Run PromptLoom Setup Script] --> B[Scaffold Project Structure]
     end
 
-    subgraph "Use (Daily development cycle)"
-        C[Pick Phase Prompt] --> D[Work with Copilot Chat]
+    subgraph "Use (Daily dev)"
+        C[Pick Phase Prompt] --> D[Work with Copilot Agent]
         D --> E[Produce Artifacts: Code, Docs, ADRs, Tests]
     end
 
-    subgraph "Evolve (Continuous improvement)"
+    subgraph "Evolve"
         F[Update Per-Phase Memory] --> G[Refine Outputs]
         G --> H[Continue Loop]
     end
@@ -39,10 +35,10 @@ flowchart TD
 ```
 
 **Setup**: Generate scaffolding once—get 16 prompts, configs, and memory structure
-**Use**: Pick any phase (requirements, architecture, testing, etc.) and work with Copilot to produce deliverables
-**Evolve**: Capture decisions in structured memory, refine your approach, and build on what worked
 
-⸻
+**Use**: Pick any phase (requirements, architecture, testing, etc.) and work with Copilot to produce deliverables
+
+**Evolve**: Capture decisions in structured memory, refine your approach, and build on what worked
 
 ## Example Workflow
 
@@ -86,8 +82,6 @@ Selected microservices architecture with React frontend and Node.js APIs.
 
 See the full context in [example/docs/memory](./example/docs/memory).
 
-⸻
-
 ## Quick Start
 
 ### 1) Run the setup script (no download required)
@@ -123,15 +117,11 @@ You'll be prompted for project name, team, tech stack, specializations, and tags
 - Produce the artifacts listed in the prompt (docs, tests, code, ADRs)
 - Update memory: append a new entry to the relevant file in `docs/memory/` and add a one-liner to `docs/memory/index.md`
 
-⸻
-
 ## What You Get (the 60-second tour)
 - **16 prompts** covering the SDLC: Requirements, User Stories, Architecture, Docs, Implementation, Testing, Deployment, Release Notes, Security, Memory ops, Error Recovery, Integration Tests, Customization
 - **Capabilities-first config**: bind commands for unit/e2e/contract/perf/docs/lint in `capabilities.yml`—tools are suggestions, not mandates
 - **Structured memory**: per-phase files with frontmatter (phase, tags, sources, confidence, status) and sections (Summary, Decisions, Evidence, Questions, Links)
 - **Diagrams & docs**: Mermaid workflow, usage guide, and ADR scaffolding
-
-⸻
 
 ## Where Does It Work?
 
@@ -143,15 +133,11 @@ You'll be prompted for project name, team, tech stack, specializations, and tags
 
 **AI Assistants**: Optimized for GitHub Copilot Chat today—if you want first-class support for other AI coding assistants (Cursor, Claude, etc.), please open an issue as community interest drives the roadmap
 
-⸻
-
 ## Documentation
 - **Usage Guide**: `docs/framework/usage-guide.md` (phase-by-phase workflow)
 - **Workflow Diagram**: `docs/framework/workflow-diagrams.md`
 - **Memory**: See `docs/memory/index.md` and the per-phase files under `docs/memory/`
 - **ADRs**: Use `docs/adr/` to record architectural decisions
-
-⸻
 
 ## Contributing
 
