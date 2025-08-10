@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="78 62 475 220" role="img" aria-labelledby="title desc">
+  <title id="title">PromptLoom</title>
+  <desc id="desc">A loom icon (warp and weft) with a subtle AI node constellation and the PromptLoom wordmark. Transparent background.</desc>
+
+  <defs>
+    <!-- Palette -->
+    <linearGradient id="warpBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1DA1F2"/>
+      <stop offset="1" stop-color="#1565FF"/>
+    </linearGradient>
+    <linearGradient id="weftYellow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFC83D"/>
+      <stop offset="1" stop-color="#FFB347"/>
+    </linearGradient>
+    <linearGradient id="weftTeal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#22C7C2"/>
+      <stop offset="1" stop-color="#00B5AD"/>
+    </linearGradient>
+    <linearGradient id="weftPink" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF5FA5"/>
+      <stop offset="1" stop-color="#F04480"/>
+    </linearGradient>
+
+    <!-- Mask: make horizontals pass under alternating warp bars -->
+    <mask id="underWarp">
+      <rect x="0" y="0" width="900" height="300" fill="#fff"/>
+      <!-- punch-outs align to warp bars 1 and 3 -->
+      <rect x="70"  y="40" width="30" height="200" rx="15" fill="#000"/>
+      <rect x="170" y="40" width="30" height="200" rx="15" fill="#000"/>
+    </mask>
+  </defs>
+
+  <!-- Icon group (left) -->
+  <g transform="translate(40,40)">
+    <!-- Warp (vertical blue bars) -->
+    <rect x="70"  y="40" width="30" height="200" rx="15" fill="url(#warpBlue)"/>
+    <rect x="120" y="40" width="30" height="200" rx="15" fill="url(#warpBlue)"/>
+    <rect x="170" y="40" width="30" height="200" rx="15" fill="url(#warpBlue)"/>
+
+    <!-- Weft (horizontal colorful bands) with over/under effect -->
+    <g mask="url(#underWarp)">
+      <rect x="40" y="80"  width="200" height="26" rx="13" fill="url(#weftYellow)"/>
+      <rect x="40" y="130" width="200" height="26" rx="13" fill="url(#weftTeal)"/>
+      <rect x="40" y="180" width="200" height="26" rx="13" fill="url(#weftPink)"/>
+    </g>
+
+    <!-- AI hint: small node constellation in the top-right corner of the icon -->
+    <g transform="translate(220,20)">
+      <path d="M10,25 L34,10 L52,24 L42,44 L22,40 Z" fill="none" stroke="#1565FF" stroke-width="2"/>
+      <circle cx="10" cy="25" r="6" fill="#1565FF"/>
+      <circle cx="34" cy="10" r="6" fill="#1565FF"/>
+      <circle cx="52" cy="24" r="6" fill="#1565FF"/>
+      <circle cx="42" cy="44" r="6" fill="#1565FF"/>
+      <circle cx="22" cy="40" r="6" fill="#1565FF"/>
+    </g>
+  </g>
+
+  <!-- Wordmark (right) -->
+  <g transform="translate(300,175)">
+    <!-- Use system sans so it renders everywhere; tweak as desired -->
+    <text x="0" y="0"
+          font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+          font-size="74" font-weight="700" fill="#0D2745" letter-spacing="0.2">
+      Prompt
+    </text>
+    <text x="0" y="75"
+          font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+          font-size="74" font-weight="700" fill="#0D2745" letter-spacing="0.2">
+      Loom
+    </text>
+  </g>
+</svg>

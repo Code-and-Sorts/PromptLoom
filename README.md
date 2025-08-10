@@ -1,4 +1,6 @@
-# PromptLoom
+<p align="center">
+    <img src="docs/prompt-loom.svg" alt="PromptLoom logo" width="480" />
+</p>
 
 **Turn GitHub Copilot Chat into a full project teammate — scaffold your SDLC, guide your AI with phase-specific prompts, and capture decisions in structured memory** [See it in action →](./example)
 
