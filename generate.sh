@@ -14,6 +14,14 @@ TEAM_NAME=""
 TECH_STACK=""
 SPECIALIZATIONS=""
 CUSTOM_TAGS=""
+# Capability bindings (default: unbound/null)
+CAP_UNIT_CMD=""
+CAP_E2E_CMD=""
+CAP_CONTRACT_CMD=""
+CAP_PERF_CMD=""
+CAP_DOCS_CMD=""
+CAP_LINT_CMD=""
+SUGGEST_FLAG=false
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
@@ -46,9 +54,44 @@ while [[ $# -gt 0 ]]; do
             CUSTOM_TAGS="$2"
             shift 2
             ;;
+        --cap-unit)
+            CAP_UNIT_CMD="$2"
+            shift 2
+            ;;
+        --cap-e2e)
+            CAP_E2E_CMD="$2"
+            shift 2
+            ;;
+        --cap-contract)
+            CAP_CONTRACT_CMD="$2"
+            shift 2
+            ;;
+        --cap-perf)
+            CAP_PERF_CMD="$2"
+            shift 2
+            ;;
+        --cap-docs)
+            CAP_DOCS_CMD="$2"
+            shift 2
+            ;;
+        --cap-lint)
+            CAP_LINT_CMD="$2"
+            shift 2
+            ;;
+        --suggest)
+            SUGGEST_FLAG=true
+            shift
+            ;;
         -h|--help)
             echo "Usage: $0 [OPTIONS]"
             echo "Options:"
+            echo "  --cap-unit CMD         Bind unit test capability to a command (optional)"
+            echo "  --cap-e2e CMD          Bind end-to-end/UI test capability to a command (optional)"
+            echo "  --cap-contract CMD     Bind contract test capability to a command (optional)"
+            echo "  --cap-perf CMD         Bind performance/load capability to a command (optional)"
+            echo "  --cap-docs CMD         Bind docs generation capability to a command (optional)"
+            echo "  --cap-lint CMD         Bind linting/static analysis capability to a command (optional)"
+            echo "  --suggest              Write capability_suggestions.yml (no binding; review-only)"
             echo "  -y, --yes              Skip all prompts and use defaults"
             echo "  --force                Overwrite existing files without asking"
             echo "  --project NAME         Set project name"
@@ -146,12 +189,114 @@ if [[ "$YES_FLAG" != true && -z "$CUSTOM_TAGS" ]]; then
 fi
 CUSTOM_TAGS=${CUSTOM_TAGS:-"Performance,UX,Security"}
 
+
+# Lightweight language detection (advisory only)
+DETECTED_LANGS=()
+DETECTION_BASIS=()
+detect_file() { [[ -f "$1" ]] && DETECTION_BASIS+=("$1"); }
+detect_glob() { compgen -G "$1" >/dev/null 2>&1 && DETECTION_BASIS+=("$1"); }
+detect_file "package.json" && DETECTED_LANGS+=("javascript/typescript")
+detect_file "tsconfig.json" && DETECTED_LANGS+=("typescript")
+detect_file "pyproject.toml" && DETECTED_LANGS+=("python")
+detect_file "requirements.txt" && DETECTED_LANGS+=("python")
+detect_file "go.mod" && DETECTED_LANGS+=("go")
+detect_glob "*.csproj" && DETECTED_LANGS+=(".net")
+detect_file "Cargo.toml" && DETECTED_LANGS+=("rust")
+detect_file "pom.xml" && DETECTED_LANGS+=("java")
+detect_glob "build.gradle*" && DETECTED_LANGS+=("java")
+detect_file "composer.json" && DETECTED_LANGS+=("php")
+detect_file "Gemfile" && DETECTED_LANGS+=("ruby")
+STACK_HINT="$(echo "$TECH_STACK" | tr '[:upper:]' '[:lower:]')"
+
+# Prepare capability bindings (commands optional; tool names intentionally omitted)
+CAP_UNIT_VAL="${CAP_UNIT_CMD:-null}"
+CAP_E2E_VAL="${CAP_E2E_CMD:-null}"
+CAP_CONTRACT_VAL="${CAP_CONTRACT_CMD:-null}"
+CAP_PERF_VAL="${CAP_PERF_CMD:-null}"
+CAP_DOCS_VAL="${CAP_DOCS_CMD:-null}"
+CAP_LINT_VAL="${CAP_LINT_CMD:-null}"
+
 echo -e "${BLUE}Setting up Copilot Framework for: ${PROJECT_NAME}${NC}"
 
 # Create directory structure
 echo -e "${YELLOW}Creating directory structure...${NC}"
 mkdir -p .github/{prompts,config}
 mkdir -p docs/{adr,framework}
+
+# Generate capabilities.yml
+echo -e "${YELLOW}Creating capabilities.yml...${NC}"
+write_file .github/config/capabilities.yml << EOF
+capabilities:
+  unit_test:
+    tool: null
+    command: ${CAP_UNIT_VAL}
+    notes: "Runs fast, isolated tests; target ≥80% coverage"
+  e2e_test:
+    tool: null
+    command: ${CAP_E2E_VAL}
+    notes: "Covers critical user journeys end-to-end"
+  contract_test:
+    tool: null
+    command: ${CAP_CONTRACT_VAL}
+    notes: "Verifies producer/consumer API contracts"
+  performance_test:
+    tool: null
+    command: ${CAP_PERF_VAL}
+    notes: "Establishes baseline throughput/latency with thresholds"
+  docs_generator:
+    tool: null
+    command: ${CAP_DOCS_VAL}
+    notes: "Builds API/code docs; fallback to Markdown stubs if unbound"
+  linter:
+    tool: null
+    command: ${CAP_LINT_VAL}
+    notes: "Static analysis and style checks"
+policies:
+  coverage_threshold: 0.80
+  allow_unbound_capabilities: true
+EOF
+
+# Optionally generate capability_suggestions.yml (advisory only)
+if [[ "$SUGGEST_FLAG" == true ]]; then
+  echo -e "${YELLOW}Creating capability_suggestions.yml...${NC}"
+  write_file .github/config/capability_suggestions.yml << EOF
+suggestions:
+  unit_test:
+    - { tool: "pytest", command: "pytest -q" }
+    - { tool: "jest", command: "npx jest --ci" }
+    - { tool: "go test", command: "go test ./..." }
+  e2e_test:
+    - { tool: "playwright", command: "npx playwright test" }
+    - { tool: "selenium", command: "selenium-standalone start # then run tests" }
+  contract_test:
+    - { tool: "pact", command: "pact-broker verify # adjust to stack" }
+    - { tool: "schemathesis", command: "schemathesis run openapi.yaml" }
+  performance_test:
+    - { tool: "k6", command: "k6 run tests/perf/*.js" }
+    - { tool: "jmeter", command: "jmeter -n -t tests/perf/test.jmx" }
+  docs_generator:
+    - { tool: "markdown-stubs", command: "scripts/docs-stubs.sh" }
+    - { tool: "pdoc", command: "pdoc -o docs/api <package>" }
+    - { tool: "typedoc", command: "npx typedoc --out docs/api ./src" }
+    - { tool: "gomarkdoc", command: "gomarkdoc ./... > docs/api/GO_API.md" }
+  linter:
+    - { tool: "generic-lint", command: "scripts/lint.sh" }
+    - { tool: "eslint", command: "npx eslint ." }
+    - { tool: "ruff", command: "ruff check ." }
+evidence:
+  languages:
+$(printf "%s\n" "${DETECTED_LANGS[@]}" | sed 's/^/    - "/' | sed 's/$/"/')
+  files:
+$(printf "%s\n" "${DETECTION_BASIS[@]}" | sed 's/^/    - "/' | sed 's/$/"/')
+confidence:
+  unit_test: 0.6
+  e2e_test: 0.6
+  contract_test: 0.5
+  performance_test: 0.5
+  docs_generator: 0.5
+  linter: 0.6
+EOF
+fi
 
 # Create stubs for referenced files
 echo -e "${YELLOW}Creating stubs for referenced files...${NC}"
@@ -241,11 +386,12 @@ Team: ${TEAM_NAME}
 Specializations: ${SPECIALIZATIONS}
 
 # Development Standards
-- Follow TypeScript lint and markdown style conventions
-- Always update relevant README or docs when adding code
-- Generate inline docstrings/JSDoc after implementation
-- Run security checks: npm audit, git-secrets scan
+- Follow project language and markdown style conventions
+- Update README and docs when adding code or changing behavior
+- Generate inline documentation for public APIs where applicable
+- Run security checks appropriate to the stack (e.g., dependency and secret scans)
 - Enforce ADR conventions in docs/adr/
+- Bind and use capabilities from .github/config/capabilities.yml (tools are suggestions, not mandates)
 
 # Memory Management
 - Before starting any phase, read the latest 1,000 tokens from docs/memory.md
@@ -265,6 +411,16 @@ Specializations: ${SPECIALIZATIONS}
 - Documentation must be updated for new features
 - Security scans must pass before merging
 - ADRs required for architectural changes
+
+# Capabilities
+Current bindings (null = unbound; agents should propose options but not assume a specific tool):
+- Unit tests command: ${CAP_UNIT_CMD:-null}
+- E2E tests command: ${CAP_E2E_CMD:-null}
+- Contract tests command: ${CAP_CONTRACT_CMD:-null}
+- Performance tests command: ${CAP_PERF_CMD:-null}
+- Docs generator command: ${CAP_DOCS_CMD:-null}
+- Linter command: ${CAP_LINT_CMD:-null}
+(Edit .github/config/capabilities.yml to bind or change these. Optionally run with --suggest to generate capability_suggestions.yml for review.)
 EOF
 
 # Generate team-config.yml
@@ -753,62 +909,575 @@ Review your output for:
 - ✅ Proper tagging and memory update
 PROMPT5
 
-# Create remaining prompts 06-16 with basic structure
-for i in {6..16}; do
-    case $i in
-        6) name="code-docs"; desc="Generate comprehensive code documentation"; role="Developer" ;;
-        7) name="testing"; desc="Create and execute comprehensive testing strategy"; role="QA Engineer" ;;
-        8) name="deployment"; desc="Design and implement deployment pipeline"; role="DevOps Engineer" ;;
-        9) name="release-notes"; desc="Generate release notes and changelog"; role="Technical Writer" ;;
-        10) name="security"; desc="Perform security review and vulnerability assessment"; role="Security Engineer" ;;
-        11) name="memory"; desc="Update project memory with phase completion"; role="Memory Curator" ;;
-        12) name="memory-window"; desc="Prune and manage memory window size"; role="Memory Curator" ;;
-        13) name="memory-sync"; desc="Synchronize memory across team members"; role="Memory Curator" ;;
-        14) name="error-recovery"; desc="Recover from errors and provide solutions"; role="Recovery Specialist" ;;
-        15) name="integration-test"; desc="Run integration tests across the framework"; role="QA Engineer" ;;
-        16) name="customize"; desc="Customize framework for team needs"; role="Framework Engineer" ;;
-    esac
 
-    tools='["codebase"]'
-    if [[ $i -ge 11 && $i -le 13 ]]; then
-        tools='[]'
-    fi
-
-    filename=$(printf "%02d" $i)
-    desc_capitalized="$(echo "${desc}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
-    name_capitalized="$(echo "${name}" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
-    write_file .github/prompts/${filename}-${name}.prompt.md << EOF
+# 06-code-docs.prompt.md (language-agnostic)
+write_file .github/prompts/06-code-docs.prompt.md << 'PROMPT6'
 ---
 mode: "agent"
-tools: ${tools}
-description: "${desc}"
+tools: ["codebase"]
+description: "Generate comprehensive code documentation with language-agnostic goals and optional stack-specific steps"
 ---
 
-# ${desc_capitalized}
+# Code Documentation Phase
 
-You are a ${role} working on the project.
+You are a Developer producing code-level documentation that is **language-agnostic** and repeatable.
+If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
 
-## Context
-Reference files: #docs/memory.md for project context
-Review relevant documentation and codebase: #codebase
+## Inputs
+- Source code: #codebase
+- Architecture docs: #docs/architecture/
+- Memory context: #docs/memory.md
+- Team/stack hints: #.github/config/team-config.yml
+- Capabilities config: #.github/config/capabilities.yml
 
-## Your Task
-${desc}
+## Stack Detection (do this first)
+1) Detect primary languages by scanning file extensions and build files (e.g., `go.mod`, `package.json`, `pyproject.toml`, `pom.xml`, `build.gradle`, `Cargo.toml`, `.csproj`, `composer.json`, `Gemfile`).
+2) Read `techStack` from `team-config.yml` if available.
+3) Decide on a **docs strategy**:
+   - Strategy A (preferred): Use a stack-appropriate generator to produce HTML/Markdown API docs.
+   - Strategy B (fallback): Generate Markdown stubs by extracting public symbols from source files and organizing by module/package.
 
-## Instructions
-[Phase-specific detailed instructions for ${name}]
+Record your chosen strategy in the output.
+
+## Core Tasks (language-agnostic)
+1) **Public API Surface**
+   - Document public entry points: modules/packages, exported functions/types/classes, CLI commands, HTTP endpoints, configuration, environment variables.
+2) **Module Overviews**
+   - For each module/package: brief purpose, key types/functions, invariants, error behaviors, dependencies.
+3) **Usage Examples**
+   - Add runnable examples/snippets for the top 10 most-used APIs or endpoints.
+4) **Architecture Links**
+   - Cross-link relevant sections in `docs/architecture/*` and any ADRs that shaped the API.
+5) **Developer Guide**
+   - Update `README.md` with local dev, build, test, and docs instructions, plus a link to the generated API docs.
+
+## Optional Stack-Specific Suggestions (use only if applicable)
+- Go: `gomarkdoc ./... > docs/api/GO_API.md` or `godoc -http=:6060`
+- TypeScript/JavaScript: `npx typedoc --out docs/api ./src` or `npx documentation build src -f html -o docs/api`
+- Python: `pdoc -o docs/api <package>` or `sphinx-apidoc -o docs/api <package> && make -C docs/api html`
+- Java: Maven `mvn javadoc:javadoc` or Gradle `./gradlew javadoc` -> copy to `docs/api`
+- .NET: `docfx docfx.json` -> `docs/api` (or XML docs as fallback)
+- Rust: `cargo doc --no-deps --target-dir target && cp -r target/doc docs/api`
+- Ruby: `yard doc --output-dir docs/api`
+- PHP: `phpDocumentor -d src -t docs/api`
+
+If none fit, proceed with **Strategy B** (fallback Markdown stubs).
+
+## Deliverables
+- `docs/api/` (HTML site or Markdown set) **or** `docs/api/*_API.md` stubs (fallback).
+- Updated `README.md` with “API Docs” link and docs build instructions.
+- Examples demonstrating common use.
+
+## Acceptance Criteria (agnostic)
+- Public API surface documented.
+- Module overviews exist for each non-trivial module/package.
+- Examples compile/run where applicable.
+- A single documented command builds docs or stubs.
+- Architecture/ADR cross-links included; no broken links.
 
 ## Memory Update
-After completion, update #docs/memory.md with:
-- Key accomplishments from this phase
-- Important decisions made
-- Next steps identified
+Append to #docs/memory.md:
+- Chosen strategy and rationale.
+- Gaps identified and follow-ups.
+- Link to `docs/api` and updated `README.md`.
 
-Tag: #${name_capitalized} #$(echo "${PROJECT_NAME}" | tr -d ' ')
-EOF
-done
+Tags: #CodeDocs #Documentation
 
-# Generate workflow diagrams
+## Self-Critique
+- ✅ Tool-agnostic with graceful fallback
+- ✅ Public surface and examples complete
+- ✅ Cross-linked to architecture/ADRs
+PROMPT6
+
+# 07-testing.prompt.md (language-agnostic)
+write_file .github/prompts/07-testing.prompt.md << 'PROMPT7'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Define and execute unit, integration, e2e, contract, and performance tests with language-agnostic thresholds"
+---
+
+# Testing Phase
+
+You are a QA Engineer defining and executing a comprehensive test strategy.
+If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+
+## Inputs
+- Requirements: #docs/requirements.md
+- User stories: #docs/user-stories.md
+- Architecture ADRs: #docs/adr/
+- Codebase: #codebase
+- Capabilities config: #.github/config/capabilities.yml
+
+## Stack/Context Detection
+- Identify primary languages and frameworks (build files, test directories).
+- Determine external dependencies (databases, queues, third-party APIs) needing fakes/mocks.
+
+## Tasks (agnostic)
+1) **Test Matrix**
+   - Define test types: unit, integration, end-to-end, contract, performance.
+   - Map critical user stories (US-IDs) to test cases; mark Critical, High, Medium.
+2) **Unit Tests**
+   - Create `tests/unit/**`; target coverage ≥ 80% lines/branches.
+   - Ensure fast, isolated, deterministic tests.
+3) **Integration Tests**
+   - Create `tests/integration/**`; stand up minimal infra (local containers, in-memory DB, or mocks).
+4) **Contract Tests** (if services)
+   - Create `tests/contract/**`; define producer/consumer contracts and verification.
+5) **End-to-End Tests**
+   - Create `tests/e2e/**`; cover at least one top user journey.
+6) **Performance/Load (smoke baseline)**
+   - Add a small k6/JMeter/Locust/RPS baseline under `tests/perf/**` with thresholds.
+7) **Coverage Gate**
+   - Document the coverage threshold; ensure CI will fail below the threshold.
+8) **Test Data**
+   - Create deterministic fixtures and builders; avoid time and randomness without seeding.
+
+## Optional Stack-Specific Suggestions (use only if applicable)
+- JS/TS: Jest/Vitest; Playwright/Cypress; Pact for contracts.
+- Python: pytest; Playwright/Robot; `schemathesis` for API contract.
+- Go: `testing` + `testify`; `httptest`; Dapper/Pact-Go for contracts.
+- Java: JUnit5; RestAssured; Pact-JVM; Selenium/Playwright.
+- .NET: xUnit/NUnit; WireMock.Net; Playwright.
+- Rust: `cargo test`; `tarpc`/`wiremock` equivalents; `criterion` for perf.
+
+## Deliverables
+- `docs/testing/test-matrix.md` (story→test mapping, types, thresholds).
+- Tests under `tests/**` per type.
+- Coverage report path documented.
+
+## Acceptance Criteria
+- Matrix includes all critical US-IDs.
+- Unit coverage ≥ 80% (or team-config override).
+- ≥ 1 integration and ≥ 1 e2e path for a top user journey.
+- Contracts exist for any external service boundaries.
+
+## Memory Update
+Append to #docs/memory.md:
+- Coverage summary.
+- Flaky areas and mitigation.
+- Links to reports.
+
+Tags: #Testing #Quality
+
+## Self-Critique
+- ✅ Tests align to user stories
+- ✅ Deterministic and repeatable
+- ✅ Coverage threshold enforced
+PROMPT7
+
+# 08-deployment.prompt.md (language-agnostic)
+write_file .github/prompts/08-deployment.prompt.md << 'PROMPT8'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Design and document deployment strategy, packaging, and environment promotion in a language-agnostic way"
+---
+
+# Deployment Phase
+
+You are a DevOps Engineer designing deployment and promotion.
+If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+
+## Inputs
+- ADRs: #docs/adr/
+- Codebase: #codebase
+- Tests & matrix: #docs/testing/test-matrix.md
+- Capabilities config: #.github/config/capabilities.yml
+
+## Tasks (agnostic)
+1) **Environments**
+   - Define `dev`, `staging`, `prod` with approvals and required checks.
+2) **Strategy**
+   - Choose Blue/Green, Rolling, or Recreate; document rollback.
+3) **Packaging & Artifacts**
+   - Define build artifact(s) (container image, binary, static bundle, package).
+4) **Configuration**
+   - Externalize config via `.env.example` or config files; document required variables.
+5) **Promotion Rules**
+   - Gate promotion on passing tests and manual approval for production.
+6) **Change Management**
+   - Versioning (semver) and release tagging expectations.
+
+## Optional Stack-Specific Suggestions
+- Containers: Dockerfile + multi-stage build; SBOM (syft).
+- Orchestrators: Kubernetes manifests/Helm; canary/blue-green via service routing.
+- Serverless: deploy scripts for the platform of choice; environment variables documented.
+- VMs/Bare metal: systemd unit templates; artifact paths and log locations.
+
+## Deliverables
+- `docs/deployment/strategy.md` (strategy + rollback).
+- `docs/deployment/environments.md` (env vars, secrets, approvals).
+- `.env.example` with non-secret defaults (if applicable).
+
+## Acceptance Criteria
+- Reproducible, reversible deploys.
+- Config separated from code; secrets **not** in repo.
+- Promotion path documented with preconditions.
+
+## Memory Update
+Append to #docs/memory.md:
+- Strategy chosen and rationale.
+- Rollback trigger conditions.
+- Links to deployment docs.
+
+Tags: #Deployment #ReleaseEngineering
+
+## Self-Critique
+- ✅ Reproducible and reversible
+- ✅ Config/secrets handled properly
+- ✅ Clear promotion gates
+PROMPT8
+
+# 09-release-notes.prompt.md (language-agnostic)
+write_file .github/prompts/09-release-notes.prompt.md << 'PROMPT9'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Generate release notes and changelog with traceability to stories and PRs"
+---
+
+# Release Notes Phase
+
+You are a Technical Writer creating release notes.
+
+## Inputs
+- Closed PRs/issues since last tag.
+- User stories: #docs/user-stories.md
+
+## Tasks (agnostic)
+1) Categorize changes (Features, Fixes, Docs, Security, Chore).
+2) Reference user stories (US-IDs) and PR links.
+3) Summarize breaking changes and migration steps.
+4) Update `CHANGELOG.md` and draft a release announcement.
+
+## Optional Tooling Suggestions
+- Conventional Commits; Changesets; semantic-release; GitVersion.
+
+## Deliverables
+- `CHANGELOG.md` updated.
+- `docs/release/<YYYY-MM-DD>-release-notes.md`.
+
+## Acceptance Criteria
+- Every entry references a PR or commit.
+- Breaking changes flagged with migration steps.
+
+## Memory Update
+Append to #docs/memory.md:
+- Scope of release.
+- Known issues.
+- Links to artifacts.
+
+Tags: #ReleaseNotes #Changelog
+
+## Self-Critique
+- ✅ Traceable to PRs/issues
+- ✅ Breaking changes explicit
+- ✅ User-facing summary is clear
+PROMPT9
+
+# 10-security.prompt.md (language-agnostic)
+write_file .github/prompts/10-security.prompt.md << 'PROMPT10'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Perform security review, threat model (STRIDE), and mitigation plan in a language-agnostic way"
+---
+
+# Security Review Phase
+
+You are a Security Engineer.
+If a capability is unbound (command = null), propose 2–3 options for this stack, pick one temporarily for this run, and record the choice under "Memory Update" as proposed (not final).
+
+## Inputs
+- Codebase: #codebase
+- ADRs: #docs/adr/
+- Dependencies: lockfiles or manifests
+- Capabilities config: #.github/config/capabilities.yml
+
+## Tasks (agnostic)
+1) **Threat Modeling**
+   - Apply STRIDE to main data flows; record mitigations.
+2) **Static Analysis Plan**
+   - Identify SAST/linters appropriate for the stack; list key checks.
+3) **Dependency/Vulnerability Review**
+   - Identify high-risk dependencies; plan updates or compensating controls.
+4) **Secrets Hygiene**
+   - Verify no secrets in repo; recommend pre-commit scans and CI scans.
+5) **AuthN/Z Review**
+   - Review roles/permissions and data access patterns.
+
+## Optional Tooling Suggestions
+- Secrets: gitleaks, truffleHog.
+- Deps: osv-scanner, OWASP Dependency-Check, `npm audit`, `pip-audit`, `cargo audit`, `govulncheck`.
+- SAST: CodeQL, Bandit, ESLint security plugins, SpotBugs/FindSecBugs.
+
+## Deliverables
+- `docs/security/threat-model.md` (diagrams + mitigations).
+- `docs/security/findings.md` (risk → mitigation with owners/dates).
+- `.gitignore` additions if required.
+
+## Acceptance Criteria
+- No P0 secrets in repo.
+- High-risk deps have a documented decision.
+- ≥ 1 actionable mitigation per STRIDE category found.
+
+## Memory Update
+Append to #docs/memory.md:
+- Risks identified.
+- Mitigation priorities.
+- Links to security docs.
+
+Tags: #Security #ThreatModel
+
+## Self-Critique
+- ✅ Concrete mitigations
+- ✅ Clear owners and due dates
+- ✅ Ties back to ADRs
+PROMPT10
+
+# 11-memory.prompt.md (language-agnostic)
+write_file .github/prompts/11-memory.prompt.md << 'PROMPT11'
+---
+mode: "agent"
+tools: []
+description: "Update project memory with phase completion details"
+---
+
+# Memory Update Phase
+
+You are a Memory Curator.
+
+## Inputs
+- Outputs from the just-completed phase.
+- #docs/memory.md
+
+## Tasks
+1) Append a new entry with:
+   - Date, Phase, Tags
+   - Summary (≤ 10 lines)
+   - Decisions and links to artifacts
+2) Cross-link ADRs or docs created.
+
+## Deliverables
+- New entry appended to `docs/memory.md` under “Current Status”.
+
+## Acceptance Criteria
+- Entry contains links and tags.
+- Entry references the phase outputs.
+
+Tags: #Memory #ProjectLog
+
+## Self-Critique
+- ✅ Concise and link-rich
+- ✅ Tagged for retrieval
+PROMPT11
+
+# 12-memory-window.prompt.md (language-agnostic)
+write_file .github/prompts/12-memory-window.prompt.md << 'PROMPT12'
+---
+mode: "agent"
+tools: []
+description: "Prune memory to keep a workable window; archive older entries"
+---
+
+# Memory Pruning Phase
+
+You are a Memory Curator.
+
+## Inputs
+- team-config retention: #.github/config/team-config.yml
+- #docs/memory.md
+
+## Tasks
+1) Identify entries older than configured retention (default: `normal: 14` days).
+2) Move detailed content to `docs/memory-archive/YYYY-WW.md`.
+3) Replace original entries with a one-line summary + archive link.
+
+## Deliverables
+- Updated `docs/memory.md`.
+- New archive file created for the week.
+
+## Acceptance Criteria
+- Current memory file reduced in size.
+- No loss of links or decisions.
+
+Tags: #MemoryPrune #Archive
+
+## Self-Critique
+- ✅ Window sized for fast retrieval
+- ✅ Archives properly indexed
+PROMPT12
+
+# 13-memory-sync.prompt.md (language-agnostic)
+write_file .github/prompts/13-memory-sync.prompt.md << 'PROMPT13'
+---
+mode: "agent"
+tools: []
+description: "Synchronize memory across contributors; resolve conflicts"
+---
+
+# Memory Sync Phase
+
+You are a Memory Curator.
+
+## Inputs
+- Latest commits from all contributors.
+- #docs/memory.md
+
+## Tasks
+1) Merge memory entries added by others.
+2) Resolve conflicts by retaining newest summaries and preserving all links.
+3) Add a “Sync Note” entry with what changed.
+
+## Deliverables
+- Reconciled `docs/memory.md`.
+- `docs/memory-sync/notes-YYYY-MM-DD.md` with diff summary.
+
+## Acceptance Criteria
+- No unresolved conflict markers.
+- Sync note links to relevant PRs/commits.
+
+Tags: #MemorySync #Collaboration
+
+## Self-Critique
+- ✅ No duplication
+- ✅ Clear provenance
+PROMPT13
+
+# 14-error-recovery.prompt.md (language-agnostic)
+write_file .github/prompts/14-error-recovery.prompt.md << 'PROMPT14'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Diagnose failures and produce fixes with a lightweight postmortem"
+---
+
+# Error Recovery Phase
+
+You are a Recovery Specialist.
+
+## Inputs
+- Failing tests/builds.
+- Logs and error messages.
+- Recent changes.
+
+## Tasks
+1) Reproduce the failure deterministically.
+2) Identify root cause; list hypotheses and elimination steps.
+3) Implement fix or document rollback.
+4) Add a lightweight postmortem entry.
+
+## Deliverables
+- Fix (code or config) or rollback doc `docs/recovery/rollback-<id>.md`.
+- Postmortem: `docs/recovery/postmortem-YYYY-MM-DD.md`.
+
+## Acceptance Criteria
+- Reproduction steps recorded.
+- Fix validated by tests.
+- Postmortem includes “lessons learned”.
+
+## Memory Update
+Append to #docs/memory.md:
+- Root cause and fix link.
+- Any follow-up tasks.
+
+Tags: #Recovery #Postmortem
+
+## Self-Critique
+- ✅ Reproducible
+- ✅ Prevents recurrence
+PROMPT14
+
+# 15-integration-test.prompt.md (language-agnostic)
+write_file .github/prompts/15-integration-test.prompt.md << 'PROMPT15'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Run cross-service/integration tests and document results in a language-agnostic way"
+---
+
+# Integration Test Phase
+
+You are a QA Engineer.
+
+## Inputs
+- Test matrix: #docs/testing/test-matrix.md
+- Codebase and services
+
+## Tasks
+1) Identify top 3 cross-cutting flows (e.g., user signup → notification → data persisted).
+2) Write integration tests covering those flows.
+3) Capture test environment and data setup steps.
+4) Generate a results report.
+
+## Optional Tooling Suggestions
+- HTTP/API: Postman/Newman, RestAssured, supertest, httpx/pytest.
+- UI: Playwright/Selenium.
+- Messaging: Testcontainers/fakes/mocks appropriate to the stack.
+
+## Deliverables
+- `tests/integration/**` coverage for chosen flows.
+- `docs/testing/integration-results.md`.
+
+## Acceptance Criteria
+- Each flow has at least one passing test.
+- Results document includes environment and data setup.
+
+## Memory Update
+Append to #docs/memory.md with links to tests and results.
+
+Tags: #IntegrationTest #Quality
+
+## Self-Critique
+- ✅ Critical paths covered
+- ✅ Repeatable environment steps
+PROMPT15
+
+# 16-customize.prompt.md (language-agnostic)
+write_file .github/prompts/16-customize.prompt.md << 'PROMPT16'
+---
+mode: "agent"
+tools: ["codebase"]
+description: "Customize framework knobs for team and stack in a language-agnostic way"
+---
+
+# Customization Phase
+
+You are a Framework Engineer.
+
+## Inputs
+- team-config: #.github/config/team-config.yml
+- phase-config: #.github/config/phase-config.yml
+- tags: #.github/config/tags.yml
+
+## Tasks
+1) Review tags and adjust to project domain.
+2) Adjust phase priorities/estimates as needed.
+3) Add stack-specific scripts to package manifest or Taskfile.
+4) Document team-specific standards in `copilot-instructions.md`.
+
+## Deliverables
+- Updated config files.
+- `docs/framework/customizations.md`.
+
+## Acceptance Criteria
+- Config matches actual team stack and needs.
+- Standards reflected in Copilot instructions.
+
+## Memory Update
+Append to #docs/memory.md:
+- Summary of customizations.
+- Any new scripts/paths.
+
+Tags: #Customize #Framework
+
+## Self-Critique
+- ✅ Knobs reflect reality
+- ✅ Minimal friction to adopt
+PROMPT16
+
+ # Generate workflow diagrams
 echo -e "${YELLOW}Creating workflow diagrams...${NC}"
 write_file docs/framework/workflow-diagrams.md << 'DIAGRAMS'
 # Project Workflow Diagrams
